@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+ 
+ 
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://d3js.org/topojson.v1.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="js/vendor/jquery-1.8.3.min.js"><\/script>')</script>
+ 
+<body>
+  <div class="mapcontainer">
+    <div class="countyname">
+      County Name
+    </div>
+  </div>
+ 
+ 
+ <script>
+ 
+var centered;
+var width = 960
+var height = 500
+ 
+// http://bl.ocks.org/mbostock/5126418
+// http://www.ngs.noaa.gov/PUBS_LIB/ManualNOSNGS5.pdf pg 69
+// used the pdf above and bostock example to get projection for NYS
+var projection = d3.geo.transverseMercator()
+.rotate([76+35 / 60, -40 - 00 / 60]);
+ 
+// this will be used to create objects with FIPS and then data
+var rateById = d3.map();
+ 
+var path = d3.geo.path()
+  .projection(projection)
+  .pointRadius(1);// this is unnecessary since we set later but is good reference
+ 
+ 
+// create the SVG to house the map
+var svg = d3.select(".mapcontainer").append("svg")
+.attr("width", width)
+.attr("height", height);
+ 
+queue()
+  .defer(d3.json, "us.geojson")
+  .await(ready);
+ 
+ 
+ 
+function ready(error, nys) {
+ 
+  //topojson.feature returns a GeoJSON Feature or Feature collection
+ var nysGeoJSON = topojson.feature(nys, nys.objects.counties)
+ 
+var nysGeoJSONfilt  = {type: "FeatureCollection", features: nysGeoJSON.features.filter(function(d){return String(d.id).substring(0,2)=='36'})}
+ 
+  projection.scale(1)
+    .translate([0, 0]);
+ 
+  var b = path.bounds(nysGeoJSONfilt),
+    s = .95 / Math.max((b[1][0] - b[0][0]) / width, (b[1][1] - b[0][1]) / height),
+    t = [(width - s * (b[1][0] + b[0][0])) / 2, (height - s * (b[1][1] + b[0][1])) / 2];
+ 
+  projection.scale(s)
+    .translate(t);
+ 
+  console.log('abc')
+  svg.append("g")
+    .attr("class", "counties")
+    .selectAll("path")
+    .data(nysGeoJSONfilt.features)
+    .enter()
+    .append("path")
+    .attr("d", path)
+    .attr("fill", "red")
+    .attr("stroke", "white");
+ 
+ 
+ 
+}; //end ready function
+ 
+ 
+ 
+ 
+</script>
